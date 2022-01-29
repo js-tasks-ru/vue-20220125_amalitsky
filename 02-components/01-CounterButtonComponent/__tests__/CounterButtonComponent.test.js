@@ -1,5 +1,5 @@
 const { shallowMount } = require('@vue/test-utils');
-const { default: CounterButton } = require(global.getSolutionPath('CounterButton'));
+const { CounterButton } = require(global.getSolutionPath('CounterButton'));
 
 jest.mock(global.getSolutionPath('vendor/vue.esm-browser.js'), () => require('vue'));
 
