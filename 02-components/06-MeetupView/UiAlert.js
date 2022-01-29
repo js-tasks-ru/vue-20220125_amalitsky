@@ -1,6 +1,6 @@
 import { defineComponent } from './vendor/vue.esm-browser.js';
 
-export default defineComponent({
+export const UiAlert = defineComponent({
   name: 'UiAlert',
 
   template: `
