@@ -61,3 +61,5 @@ export const MeetupView = defineComponent({
       </ui-container>
     </div>`,
 });
+
+export default MeetupInfo;
