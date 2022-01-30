@@ -8,5 +8,5 @@ export const MeetupDescription = defineComponent({
   },
 
   template:
-    `<p class="meetup-description">{{ description ?? '' }}</p>`,
+    `<p class="meetup-description">{{ description }}</p>`,
 });
