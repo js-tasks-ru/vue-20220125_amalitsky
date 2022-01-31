@@ -1,5 +1,5 @@
 import { shallowMount } from '@vue/test-utils';
-const { default: MeetupCover } = require(global.getSolutionPath('MeetupCover'));
+const { MeetupCover } = require(global.getSolutionPath('MeetupCover'));
 import meetups from './__fixtures__/meetups.json';
 
 jest.mock(global.getSolutionPath('vendor/vue.esm-browser.js'), () => require('vue'));

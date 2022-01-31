@@ -7,16 +7,23 @@
     <title>CounterButtonComponent</title>
   </head>
   <body>
+    <style>
+      button {
+        padding:0.5rem 1rem;
+      }
+    </style>
     <div id="app" class="sample container">
       <p>count = {{ count }}</p>
-      <p><counter-button :count="count" @update:count="count = $event"></counter-button></p>
-      <p><counter-button v-model:count="count"></counter-button></p>
-      <p><counter-button v-model:count="count"></counter-button></p>
+      <p v-for="n in 7">
+        <counter-button
+          v-model:count="count"
+          @update:count="count = $event"/>
+      </p>
     </div>
 
     <script type="module">
       import { createApp } from './vendor/vue.esm-browser.js';
-      import CounterButton from './CounterButton.js';
+      import { CounterButton } from './CounterButton.js';
 
       createApp({
         components: {
