@@ -1,24 +1,69 @@
 <template>
   <div class="toasts">
-    <div class="toast toast_success">
-      <ui-icon class="toast__icon" icon="check-circle" />
-      <span>Success Toast Example</span>
-    </div>
-
-    <div class="toast toast_error">
-      <ui-icon class="toast__icon" icon="alert-circle" />
-      <span>Error Toast Example</span>
-    </div>
+    <toast
+      v-for="[id, toast] in toasts"
+      :key="id"
+      :message="toast.message"
+      :type="toast.type"
+      :close-button="toast.closeButton"
+      @close="remove(toast)"
+    />
   </div>
 </template>
 
 <script>
-import UiIcon from './UiIcon';
+import Toast from './Toast';
 
 export default {
   name: 'TheToaster',
 
-  components: { UiIcon },
+  components: {
+    Toast,
+  },
+
+  data() {
+    return {
+      counter: 0,
+      toasts: new Map(),
+      timeouts: [],
+    };
+  },
+
+  beforeUnmount() {
+    this.timeouts.forEach(timeoutId => clearTimeout(timeoutId));
+  },
+
+  methods: {
+    add(toast, timeout, closeButton = false) {
+      toast.id = this.counter++;
+      toast.closeButton = closeButton;
+
+      this.toasts.set(toast.id, toast);
+
+      if (timeout) {
+        const timeoutId = setTimeout(() => this.remove(toast), timeout);
+
+        this.timeouts.push(timeoutId);
+      }
+    },
+    remove(toast) {
+      this.toasts.delete(toast.id);
+    },
+    success(message, timeout = 5000) {
+      this.add({
+        message,
+        type: 'success',
+      }, timeout);
+    },
+    error(message, timeout = 5000) {
+      this.add({
+        message,
+        type: 'error',
+      }, timeout, true);
+    },
+  },
+
+
 };
 </script>
 
@@ -41,33 +86,8 @@ export default {
   }
 }
 
-.toast {
-  display: flex;
-  flex: 0 0 auto;
-  flex-direction: row;
-  align-items: center;
-  padding: 16px;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-  border-radius: 4px;
-  font-size: 18px;
-  line-height: 28px;
-  width: auto;
-}
-
 .toast + .toast {
   margin-top: 20px;
 }
 
-.toast__icon {
-  margin-right: 12px;
-}
-
-.toast.toast_success {
-  color: var(--green);
-}
-
-.toast.toast_error {
-  color: var(--red);
-}
 </style>
