@@ -1,7 +1,7 @@
 <template>
   <div v-once class="toast" :class="toastClass">
-    <ui-icon v-once class="toast__icon" :icon="toastIcon" />
-    <span v-once>{{ message }}</span>
+    <ui-icon class="toast__icon" :icon="toastIcon" />
+    <span>{{ message }}</span>
     <!--<button v-if="closeButton" @click="$emit('close')">x</button>-->
   </div>
 </template>

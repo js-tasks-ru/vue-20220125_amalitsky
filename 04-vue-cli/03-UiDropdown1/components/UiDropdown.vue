@@ -6,8 +6,8 @@
     <button
       type="button"
       class="dropdown__toggle"
-      :class="haveOptionWithIcon ? 'dropdown__toggle_icon' : null"
-      @click="renderOptions ? hideOptions() : showOptions()"
+      :class="{ dropdown__toggle_icon: haveOptionWithIcon }"
+      @click="toggleOptions()"
     >
       <ui-icon
         v-if="icon"
@@ -26,7 +26,7 @@
         v-for="option in options"
         :key="option.value"
         :option="option"
-        :class="haveOptionWithIcon ? 'dropdown__item_icon': null"
+        :class="{ dropdown__item_icon: haveOptionWithIcon }"
         @optionSelection="selectOption(option)"
       />
     </div>
@@ -95,7 +95,7 @@ export default {
       set(value) {
         this.$emit(EVENT, value);
         this.hideOptions();
-      }
+      },
     },
     label() {
       const { title, selectedOption } = this;
@@ -141,7 +141,14 @@ export default {
     },
     hideOptions() {
       this.renderOptions = false;
-    }
+    },
+    toggleOptions() {
+      if (this.renderOptions) {
+        this.hideOptions();
+      } else {
+        this.showOptions();
+      }
+    },
   },
 };
 </script>
