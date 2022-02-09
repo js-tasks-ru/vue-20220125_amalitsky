@@ -1,30 +1,155 @@
 <template>
-  <div class="dropdown dropdown_opened">
-    <button type="button" class="dropdown__toggle dropdown__toggle_icon">
-      <ui-icon icon="tv" class="dropdown__icon" />
-      <span>Title</span>
+  <div
+    class="dropdown"
+    :class="renderOptions ? 'dropdown_opened' : null"
+  >
+    <button
+      type="button"
+      class="dropdown__toggle"
+      :class="{ dropdown__toggle_icon: haveOptionWithIcon }"
+      @click="toggleOptions()"
+    >
+      <ui-icon
+        v-if="icon"
+        :icon="icon"
+        class="dropdown__icon"
+      />
+      <span>{{ label }}</span>
     </button>
 
-    <div class="dropdown__menu" role="listbox">
-      <button class="dropdown__item dropdown__item_icon" role="option" type="button">
-        <ui-icon icon="tv" class="dropdown__icon" />
-        Option 1
-      </button>
-      <button class="dropdown__item dropdown__item_icon" role="option" type="button">
-        <ui-icon icon="tv" class="dropdown__icon" />
-        Option 2
-      </button>
+    <div
+      v-show="renderOptions"
+      class="dropdown__menu"
+      role="listbox"
+    >
+      <ui-dropdown-option
+        v-for="option in options"
+        :key="option.value"
+        :option="option"
+        :class="{ dropdown__item_icon: haveOptionWithIcon }"
+        @optionSelection="selectOption(option)"
+      />
     </div>
+
+    <select
+      v-model="nativeSelectValue"
+      class="dropdown__native-select"
+    >
+      <option
+        v-for="option in options"
+        :key="option.value"
+        :value="option.value"
+      >{{ option.text }}</option>
+    </select>
   </div>
 </template>
 
 <script>
 import UiIcon from './UiIcon';
+import UiDropdownOption from './UiDropdownOption';
+
+const EVENT = 'update:modelValue';
 
 export default {
   name: 'UiDropdown',
 
-  components: { UiIcon },
+  components: {
+    UiDropdownOption,
+    UiIcon,
+  },
+
+  props: {
+    title: {
+      type: String,
+      required: true,
+    },
+    modelValue: String,
+    options: {
+      type: Array,
+      required: true,
+    },
+  },
+
+  emits: [
+    EVENT,
+  ],
+
+  data() {
+    return {
+      renderOptions: false,
+    };
+  },
+
+  computed: {
+    optionsMap() {
+      const { options } = this;
+
+      return new Map(
+        options.map(option => [option.value, option]),
+      );
+    },
+    nativeSelectValue: {
+      get() {
+        return this.modelValue || '';
+      },
+      set(value) {
+        this.$emit(EVENT, value);
+        this.hideOptions();
+      },
+    },
+    label() {
+      const { title, selectedOption } = this;
+
+      if (selectedOption) {
+        return selectedOption.text;
+      }
+
+      return title;
+    },
+    icon() {
+      const { selectedOption } = this;
+
+      if (!selectedOption) {
+        return;
+      }
+
+      return selectedOption.icon;
+    },
+    selectedOption() {
+      const { modelValue, optionsMap } = this;
+
+      if (!modelValue) {
+        return null;
+      }
+
+      const option = optionsMap.get(modelValue);
+
+      return option || null;
+    },
+    haveOptionWithIcon() {
+      return this.options.some(option => option.icon);
+    },
+  },
+
+  methods: {
+    selectOption(option) {
+      this.$emit(EVENT, option.value);
+      this.hideOptions();
+    },
+    showOptions() {
+      this.renderOptions = true;
+    },
+    hideOptions() {
+      this.renderOptions = false;
+    },
+    toggleOptions() {
+      if (this.renderOptions) {
+        this.hideOptions();
+      } else {
+        this.showOptions();
+      }
+    },
+  },
 };
 </script>
 
@@ -110,37 +235,23 @@ export default {
   bottom: auto;
 }
 
-.dropdown__item {
-  padding: 8px 16px;
-  font-weight: 500;
-  font-size: 20px;
-  line-height: 28px;
-  background-color: var(--white);
-  box-shadow: none;
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  transition-duration: 0.2s;
-  transition-property: background-color, border-color, color;
-  outline: none;
-  text-decoration: none;
-}
-
-.dropdown__item:hover,
-.dropdown__item:focus {
-  background-color: var(--grey-light);
-}
-
 .dropdown__item.dropdown__item_icon {
   padding-left: 56px;
   position: relative;
 }
 
-.dropdown__item.dropdown__item_icon .dropdown__icon,
+.dropdown__item.dropdown__item_icon :deep(.dropdown__icon),
 .dropdown__toggle_icon .dropdown__icon {
   position: absolute;
   top: 50%;
   left: 16px;
   transform: translate(0, -50%);
+}
+
+.dropdown__native-select {
+  position: absolute;
+  left: -5000em;
+  height: 0;
+  overflow: hidden;
 }
 </style>
