@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
 
+import PageNotFound from '../views/PageNotFound.vue';
+
 export const router = createRouter({
   history: createWebHistory('/05-vue-router/02-NotFound'),
   routes: [
@@ -11,6 +13,9 @@ export const router = createRouter({
     {
       path: '/page-b',
       component: () => import('../views/PageB'),
+    }, {
+      path: '/:any(.*)*',
+      component: PageNotFound,
     },
   ],
 });
