@@ -9,4 +9,6 @@ import '@/assets/styles/_input-group.css';
 import '@/assets/styles/_page-auth.css';
 import '@/assets/styles/_title.css';
 
-createApp(App).use(router).mount('#app');
+createApp(App)
+  .use(router)
+  .mount('#app');
