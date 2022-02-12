@@ -1,6 +1,7 @@
 <template>
   <component
     :is="tag"
+    class="button"
     :class="classes"
     v-bind="attributes"
   >
