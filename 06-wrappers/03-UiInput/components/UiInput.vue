@@ -48,7 +48,7 @@ export default {
     multiline: Boolean,
     modelValue: [String, Number],
     modelModifiers: {
-      default: () => ({})
+      default: () => ({}),
     },
   },
 
