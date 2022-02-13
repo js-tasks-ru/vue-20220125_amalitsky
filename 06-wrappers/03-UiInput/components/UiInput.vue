@@ -24,7 +24,7 @@
         'form-control_rounded': rounded,
         'form-control_sm': small,
       }"
-      @input="modelValueProxy = $event.target.value"
+      @[eventName]="modelValueProxy = $event.target.value"
     ></component>
 
     <div
@@ -47,7 +47,11 @@ export default {
     rounded: Boolean,
     multiline: Boolean,
     modelValue: [String, Number],
+    modelModifiers: {
+      default: () => ({})
+    },
   },
+
 
   emits: ['update:modelValue'],
 
@@ -62,6 +66,13 @@ export default {
       set(value) {
         this.$emit('update:modelValue', value);
       },
+    },
+    eventName() {
+      if (this.modelModifiers.lazy) {
+        return 'change';
+      }
+
+      return 'input';
     },
   },
 
