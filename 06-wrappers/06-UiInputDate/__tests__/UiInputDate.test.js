@@ -1,6 +1,8 @@
 const { mount } = require('@vue/test-utils');
 const UiInputDate = require(global.getSolutionPath('components/UiInputDate.vue')).default;
 
+const dayjs = require('dayjs');
+
 describe('wrappers/UiInputDate', () => {
   describe('UiInputDate', () => {
     let dateStrings = {
