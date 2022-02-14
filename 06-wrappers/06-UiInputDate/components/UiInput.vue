@@ -74,6 +74,9 @@ export default {
     focus() {
       this.$refs['input'].focus();
     },
+    getValueAsNumber() {
+      return this.$refs['input'].valueAsNumber;
+    },
   },
 };
 </script>
