@@ -1,8 +1,39 @@
 <template>
   <div class="image-uploader">
-    <label class="image-uploader__preview image-uploader__preview-loading" style="--bg-url: url('/link.jpeg')">
-      <span class="image-uploader__text">Загрузить изображение</span>
-      <input type="file" accept="image/*" class="image-uploader__input" />
+    <label
+      class="image-uploader__preview"
+      :class="{
+        'image-uploader__preview-loading': uploading,
+      }"
+      :style="coverStyles"
+    >
+      <span
+        class="image-uploader__text"
+        v-if="!selectedImageUrl"
+      >
+        Загрузить изображение
+      </span>
+      <span
+        class="image-uploader__text"
+        v-if="uploading"
+      >
+        Загрузка...
+      </span>
+      <span
+        class="image-uploader__text"
+        v-if="selectedImageUrl"
+      >Удалить изображение</span>
+
+      <input
+        v-bind="$attrs"
+        ref="fileInput"
+        type="file"
+        accept="image/*"
+        class="image-uploader__input"
+        :disabled="uploading"
+        @click="onWrapperClick($event)"
+        @change="onFileSelect($event)"
+      />
     </label>
   </div>
 </template>
@@ -10,11 +41,93 @@
 <script>
 export default {
   name: 'UiImageUploader',
+
+  inheritAttrs: false,
+
+  props: {
+    preview: {
+      type: String,
+    },
+    uploader: Function,
+  },
+
+  emits: ['select', 'upload', 'error', 'remove'],
+
+  data() {
+    return {
+      uploading: false,
+      selectedImageUrl: this.preview || '',
+    };
+  },
+
+  computed: {
+    coverStyles() {
+      const { selectedImageUrl } = this;
+
+      if (selectedImageUrl) {
+        return {
+          '--bg-url': `url(${selectedImageUrl})`,
+        };
+      }
+
+      return null;
+    },
+  },
+
+  watch: {
+    // in case parent component changes preview programmatically
+    preview(newPreviewValue) {
+      if (!newPreviewValue) {
+        this.remove(false);
+      } else {
+        this.selectedImageUrl = newPreviewValue;
+      }
+    },
+  },
+
+  methods: {
+    remove(withEvent = true) {
+      this.$refs.fileInput.value = '';
+      this.selectedImageUrl = '';
+
+      if (withEvent) {
+        this.$emit('remove');
+      }
+    },
+    onFileSelect(event) {
+      const [file] = event.target.files;
+
+      this.selectedImageUrl = URL.createObjectURL(file);
+
+      this.$emit('select', file);
+
+      if (this.uploader) {
+        this.uploading = true;
+
+        this.uploader(file)
+          .then((result) => {
+            this.$emit('upload', result);
+          })
+          .catch((err) => {
+            this.$emit('error', err);
+            this.remove(false);
+          })
+          .finally(() => this.uploading = false);
+      }
+    },
+    onWrapperClick(event) {
+      if (this.selectedImageUrl) {
+        this.remove();
+        event.preventDefault();
+      }
+    },
+  },
 };
 </script>
 
 <style scoped>
 .image-uploader {
+  --bg-url: url('/public/images/undraw_conference_speaker_6nt7.svg');
 }
 
 .image-uploader__input {
