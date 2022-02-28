@@ -69,5 +69,11 @@ export default {
       },
     },
   },
+
+  methods: {
+    getValueAsNumber() {
+      return this.$refs['input'].getValueAsNumber;
+    },
+  },
 };
 </script>
