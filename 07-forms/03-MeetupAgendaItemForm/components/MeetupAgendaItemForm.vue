@@ -1,37 +1,93 @@
 <template>
   <fieldset class="agenda-item-form">
-    <button type="button" class="agenda-item-form__remove-button">
+    <button
+      type="button"
+      class="agenda-item-form__remove-button"
+      @click="remove()"
+    >
       <ui-icon icon="trash" />
     </button>
 
     <ui-form-group>
-      <ui-dropdown title="Тип" :options="$options.agendaItemTypeOptions" name="type" />
+      <ui-dropdown
+        title="Тип"
+        name="type"
+        :options="$options.agendaItemTypeOptions"
+        @change="onEventTypeChange()"
+        v-model="localAgendaItem.type"
+      />
     </ui-form-group>
 
     <div class="agenda-item-form__row">
       <div class="agenda-item-form__col">
-        <ui-form-group label="Начало">
-          <ui-input type="time" placeholder="00:00" name="startsAt" />
+        <ui-form-group
+          label="Начало"
+        >
+          <ui-input
+            type="time"
+            placeholder="00:00"
+            name="startsAt"
+            ref="startsAt"
+            v-model.lazy="localAgendaItem.startsAt"
+            v-on:update:modelValue="onStartTimeChange()"
+          />
         </ui-form-group>
       </div>
       <div class="agenda-item-form__col">
-        <ui-form-group label="Окончание">
-          <ui-input type="time" placeholder="00:00" name="endsAt" />
+        <ui-form-group
+          label="Окончание"
+        >
+          <ui-input
+            type="time"
+            placeholder="00:00"
+            ref="endsAt"
+            name="endsAt"
+            v-model.lazy="localAgendaItem.endsAt"
+          />
         </ui-form-group>
       </div>
     </div>
 
-    <ui-form-group label="Тема">
-      <ui-input name="title" />
+    <ui-form-group
+      :label="titleFieldLabel"
+    >
+      <ui-input
+        name="title"
+        v-model="localAgendaItem.title"
+      />
     </ui-form-group>
-    <ui-form-group label="Докладчик">
-      <ui-input name="speaker" />
+
+    <ui-form-group
+      label="Докладчик"
+      v-if="withLanguageAndSpeaker()"
+    >
+      <ui-input
+        name="speaker"
+        v-model="localAgendaItem.speaker"
+      />
     </ui-form-group>
-    <ui-form-group label="Описание">
-      <ui-input multiline name="description" />
+
+    <ui-form-group
+      v-if="withDescription()"
+      label="Описание"
+    >
+      <ui-input
+        multiline
+        name="description"
+        v-model="localAgendaItem.description"
+      />
     </ui-form-group>
-    <ui-form-group label="Язык">
-      <ui-dropdown title="Язык" :options="$options.talkLanguageOptions" name="language" />
+
+    <ui-form-group
+      v-if="withLanguageAndSpeaker()"
+      label="Язык"
+    >
+      <ui-dropdown
+        title="Язык"
+        :options="$options.talkLanguageOptions"
+        name="language"
+        v-model="localAgendaItem.language"
+      />
     </ui-form-group>
   </fieldset>
 </template>
@@ -41,6 +97,10 @@ import UiIcon from './UiIcon';
 import UiFormGroup from './UiFormGroup';
 import UiInput from './UiInput';
 import UiDropdown from './UiDropdown';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc.js';
+
+dayjs.extend(utc);
 
 const agendaItemTypeIcons = {
   registration: 'key',
@@ -76,6 +136,12 @@ const talkLanguageOptions = [
   { value: 'EN', text: 'EN' },
 ];
 
+const titleFieldLabels = {
+  talk: 'Тема',
+  other: 'Заголовок',
+  default: 'Нестандартный текст (необязательно)',
+};
+
 export default {
   name: 'MeetupAgendaItemForm',
 
@@ -84,11 +150,118 @@ export default {
 
   components: { UiIcon, UiFormGroup, UiInput, UiDropdown },
 
+  emits: [
+    'update:agendaItem',
+    'remove',
+  ],
+
   props: {
     agendaItem: {
       type: Object,
       required: true,
     },
+  },
+
+  data() {
+    const { agendaItem } = this;
+
+    return {
+      localAgendaItem: {
+        ...agendaItem,
+      },
+      previousStartsAtMs: null,
+    };
+  },
+
+  watch: {
+    localAgendaItem: {
+      handler(agendaItem) {
+        this.$emit('update:agendaItem', agendaItem);
+      },
+      deep: true,
+    },
+  },
+
+  computed: {
+    titleFieldLabel() {
+      const { type } = this.localAgendaItem;
+
+      if (type in titleFieldLabels) {
+        return titleFieldLabels[type];
+      }
+
+      return titleFieldLabels.default;
+    },
+  },
+
+  methods: {
+    remove() {
+      this.$emit('remove');
+    },
+    onEventTypeChange() {
+      const { localAgendaItem } = this;
+
+      // these are avail for talk type only, hence safe to wipe them out
+      // on any type change
+      delete localAgendaItem.language;
+      delete localAgendaItem.speaker;
+
+      if (!this.withDescription()) {
+        delete localAgendaItem.description;
+      }
+    },
+    withDescription() {
+      const { type } = this.localAgendaItem;
+
+      return type === 'talk' || type === 'other';
+    },
+    withLanguageAndSpeaker() {
+      const { type } = this.localAgendaItem;
+
+      return type === 'talk';
+    },
+    onStartTimeChange() {
+      const {
+        localAgendaItem,
+        previousStartsAtMs,
+      } = this;
+
+      const { startsAt, endsAt } = localAgendaItem;
+
+      const {
+        startsAt: startsAtInput,
+        endsAt: endsAtInput,
+      } = this.$refs;
+
+      const startsAtMs = startsAtInput.getValueAsNumber();
+      const previousEndsAtMs = endsAtInput.getValueAsNumber();
+
+      this.previousStartsAtMs = startsAtMs;
+
+      // can't calculate the expected duration
+      // hence can't update endsAt either
+      if (!endsAt || !startsAt || (!previousStartsAtMs && previousStartsAtMs !== 0)) {
+        return;
+      }
+
+      const duration = previousEndsAtMs - previousStartsAtMs;
+
+      const endsAtMs = startsAtMs + duration;
+
+      const endDate = dayjs(endsAtMs);
+
+      const endsAtStr = endDate.utc().format('HH:mm');
+
+      localAgendaItem.endsAt = endsAtStr;
+    },
+  },
+
+  mounted() {
+    const {
+      startsAt: startsAtInput,
+    } = this.$refs;
+
+    this.previousStartsAtMs = startsAtInput.getValueAsNumber();
   },
 };
 </script>
