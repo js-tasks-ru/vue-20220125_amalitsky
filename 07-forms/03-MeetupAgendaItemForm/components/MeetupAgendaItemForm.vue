@@ -29,7 +29,6 @@
             name="startsAt"
             ref="startsAt"
             v-model.lazy="localAgendaItem.startsAt"
-            v-on:update:modelValue="onStartTimeChange()"
           />
         </ui-form-group>
       </div>
@@ -59,7 +58,7 @@
 
     <ui-form-group
       label="Докладчик"
-      v-if="withLanguageAndSpeaker()"
+      v-if="withLanguageAndSpeaker"
     >
       <ui-input
         name="speaker"
@@ -68,7 +67,7 @@
     </ui-form-group>
 
     <ui-form-group
-      v-if="withDescription()"
+      v-if="withDescription"
       label="Описание"
     >
       <ui-input
@@ -79,7 +78,7 @@
     </ui-form-group>
 
     <ui-form-group
-      v-if="withLanguageAndSpeaker()"
+      v-if="withLanguageAndSpeaker"
       label="Язык"
     >
       <ui-dropdown
@@ -142,6 +141,12 @@ const titleFieldLabels = {
   default: 'Нестандартный текст (необязательно)',
 };
 
+function timeStringToMs(timeStr) {
+  const [hours, minutes] = timeStr.split(':');
+
+  return (hours * 60 + Number(minutes)) * 60 * 1000;
+}
+
 export default {
   name: 'MeetupAgendaItemForm',
 
@@ -169,17 +174,7 @@ export default {
       localAgendaItem: {
         ...agendaItem,
       },
-      previousStartsAtMs: null,
     };
-  },
-
-  watch: {
-    localAgendaItem: {
-      handler(agendaItem) {
-        this.$emit('update:agendaItem', agendaItem);
-      },
-      deep: true,
-    },
   },
 
   computed: {
@@ -191,6 +186,48 @@ export default {
       }
 
       return titleFieldLabels.default;
+    },
+    withDescription() {
+      const { type } = this.localAgendaItem;
+
+      return type === 'talk' || type === 'other';
+    },
+    withLanguageAndSpeaker() {
+      const { type } = this.localAgendaItem;
+
+      return type === 'talk';
+    },
+  },
+
+  watch: {
+    localAgendaItem: {
+      handler(agendaItem) {
+        this.$emit('update:agendaItem', agendaItem);
+      },
+      deep: true,
+    },
+    'localAgendaItem.startsAt'(startsAt, previousStartsAt) {
+      const { endsAt } = this.localAgendaItem;
+
+      const previousStartsAtMs = timeStringToMs(previousStartsAt);
+      const startsAtMs = timeStringToMs(startsAt);
+      const previousEndsAtMs = timeStringToMs(endsAt);
+
+      // can't calculate the expected duration
+      // hence can't update endsAt either
+      if (!startsAt || !endsAt || (!previousStartsAtMs && previousStartsAtMs !== 0)) {
+        return;
+      }
+
+      const duration = previousEndsAtMs - previousStartsAtMs;
+
+      const endsAtMs = startsAtMs + duration;
+
+      const endDate = dayjs(endsAtMs);
+
+      const endsAtStr = endDate.utc().format('HH:mm');
+
+      this.localAgendaItem.endsAt = endsAtStr;
     },
   },
 
@@ -206,53 +243,9 @@ export default {
       delete localAgendaItem.language;
       delete localAgendaItem.speaker;
 
-      if (!this.withDescription()) {
+      if (!this.withDescription) {
         delete localAgendaItem.description;
       }
-    },
-    withDescription() {
-      const { type } = this.localAgendaItem;
-
-      return type === 'talk' || type === 'other';
-    },
-    withLanguageAndSpeaker() {
-      const { type } = this.localAgendaItem;
-
-      return type === 'talk';
-    },
-    onStartTimeChange() {
-      const {
-        localAgendaItem,
-        previousStartsAtMs,
-      } = this;
-
-      const { startsAt, endsAt } = localAgendaItem;
-
-      const {
-        startsAt: startsAtInput,
-        endsAt: endsAtInput,
-      } = this.$refs;
-
-      const startsAtMs = startsAtInput.getValueAsNumber();
-      const previousEndsAtMs = endsAtInput.getValueAsNumber();
-
-      this.previousStartsAtMs = startsAtMs;
-
-      // can't calculate the expected duration
-      // hence can't update endsAt either
-      if (!endsAt || !startsAt || (!previousStartsAtMs && previousStartsAtMs !== 0)) {
-        return;
-      }
-
-      const duration = previousEndsAtMs - previousStartsAtMs;
-
-      const endsAtMs = startsAtMs + duration;
-
-      const endDate = dayjs(endsAtMs);
-
-      const endsAtStr = endDate.utc().format('HH:mm');
-
-      localAgendaItem.endsAt = endsAtStr;
     },
   },
 
