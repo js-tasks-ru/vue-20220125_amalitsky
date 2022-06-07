@@ -14,6 +14,6 @@ export default {
 
   render(props) {
     return props.vnode;
-  };
+  },
 };
 </script>
