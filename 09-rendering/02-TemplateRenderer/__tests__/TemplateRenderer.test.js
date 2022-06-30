@@ -66,8 +66,10 @@ describe('rendering/TemplateRenderer', () => {
       const components = markRaw({
         SomeTestDiv: defineComponent({ name: 'TestDiv', template: '<div>TestDiv</div>' }),
       });
+
       const template = `<some-test-div />`;
       const wrapper = mount(TemplateRenderer, { props: { template, components } });
+
       expect(wrapper.html()).toBe(`<div>TestDiv</div>`);
     });
   });

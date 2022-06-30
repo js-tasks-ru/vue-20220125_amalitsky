@@ -73,6 +73,7 @@ const tasks = discoverVueServeTasksDirs(__dirname);
 const taskPages = generatePagesConfig(tasks);
 
 module.exports = {
+  runtimeCompiler: true,
   pages: {
     index: {
       template: 'src/root.html',

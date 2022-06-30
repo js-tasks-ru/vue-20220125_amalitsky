@@ -49,7 +49,9 @@ export default {
       };
     },
     components() {
-      return { UiAlert };
+      return {
+        UiAlert,
+      };
     },
   },
 };
